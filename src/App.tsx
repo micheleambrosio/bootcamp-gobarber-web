@@ -1,12 +1,16 @@
 import React from 'react';
-import SignIn from './pages/SignIn';
+import { BrowserRouter as Router } from 'react-router-dom';
+import AppProvider from './hooks';
+import Routes from './routes';
 import GlobalStyle from './styles/global';
 
 const App: React.FC = () => (
-  <>
+  <Router>
     <GlobalStyle />
-    <SignIn />
-  </>
+    <AppProvider>
+      <Routes />
+    </AppProvider>
+  </Router >
 );
 
 export default App;

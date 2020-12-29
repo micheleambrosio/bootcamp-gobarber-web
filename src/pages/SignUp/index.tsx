@@ -2,15 +2,26 @@ import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import React, { useCallback, useRef } from 'react';
 import { FiArrowLeft, FiLock, FiMail, FiUser } from 'react-icons/fi';
+import { Link, useHistory } from 'react-router-dom';
 import * as Yup from 'yup';
 import logoImg from '../../assets/logo.svg';
 import Button from '../../components/Button/index';
 import Input from '../../components/Input';
+import { useToast } from '../../hooks/toast';
+import api from '../../services/api';
 import getValidationErrors from '../../utils/getValidationErrors';
-import { Background, Container, Content } from './styles';
+import { AnimationContainer, Background, Container, Content } from './styles';
+
+interface SignUpFormData {
+  name: string;
+  email: string;
+  password: string;
+}
 
 const SignUp: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
+  const { addToast } = useToast();
+  const history = useHistory();
 
   const handleSubmit = useCallback(async (data: any) => {
     try {
@@ -27,35 +38,57 @@ const SignUp: React.FC = () => {
       await schema.validate(data, {
         abortEarly: false
       });
+
+      await api.post('/users', data);
+
+      history.push('/');
+
+      addToast({
+        type: 'success',
+        title: 'Cadastro realizado!',
+        description: 'Você já pode fazer seu login no GoBarber'
+      });
     } catch (err) {
-      const errors = getValidationErrors(err);
-      formRef.current?.setErrors(errors);
+      if (err instanceof Yup.ValidationError) {
+        const errors = getValidationErrors(err);
+        formRef.current?.setErrors(errors);
+
+        return;
+      }
+
+      addToast({
+        type: 'error',
+        title: 'Erro no cadastro',
+        description: 'Ocorreu um erro ao fazer cadastro, tente novamente'
+      });
     }
-  }, []);
+  }, [addToast, history]);
 
   return (
     <Container>
       <Background />
 
       <Content>
-        <img src={logoImg} alt="GoBarber" />
+        <AnimationContainer>
+          <img src={logoImg} alt="GoBarber" />
 
-        <Form onSubmit={handleSubmit} ref={formRef}>
-          <h1>Faça seu cadastro</h1>
+          <Form onSubmit={handleSubmit} ref={formRef}>
+            <h1>Faça seu cadastro</h1>
 
-          <Input name="name" placeholder="Nome" icon={FiUser} />
-          <Input name="email" type="email" placeholder="E-mail" icon={FiMail} />
-          <Input name="password" type="password" placeholder="Senha" icon={FiLock} />
+            <Input name="name" placeholder="Nome" icon={FiUser} />
+            <Input name="email" type="email" placeholder="E-mail" icon={FiMail} />
+            <Input name="password" type="password" placeholder="Senha" icon={FiLock} />
 
-          <Button type="submit">Cadastrar</Button>
+            <Button type="submit">Cadastrar</Button>
 
-          <a href="forgot">Esqueci minha senha</a>
-        </Form>
+            <a href="forgot">Esqueci minha senha</a>
+          </Form>
 
-        <a href="login">
-          <FiArrowLeft />
-          Voltar para login
-        </a>
+          <Link to="/">
+            <FiArrowLeft />
+            Voltar para login
+          </Link>
+        </AnimationContainer>
       </Content>
     </Container>
   );
